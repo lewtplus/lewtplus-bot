@@ -1,5 +1,6 @@
 import telebot
 from flask import Flask, request
+import os
 
 TOKEN = '8273421966:AAFRsOqLXr89uogAntyHmiRaj82xcz4icGY'
 bot = telebot.TeleBot(TOKEN)
@@ -17,7 +18,12 @@ def send_welcome(message):
         "👋 Welcome to Lewt Plus Bot \n"
         "A Fitness bot intended to help you change"
     )
-    bot.send_photo(message.chat.id, "https://raw.githubusercontent.com/lewtplus/lewtplus-bot/main/tena.jpg")
+
+    # Get the absolute path to the image in the project folder
+    image_path = os.path.join(os.path.dirname(__file__), "tena.jpg")
+
+    with open(image_path, "rb") as photo:
+        bot.send_photo(message.chat.id, photo)
 
 # Webhook route
 @app.route('/', methods=['POST'])
