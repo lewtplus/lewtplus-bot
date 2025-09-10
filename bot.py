@@ -5,7 +5,7 @@ TOKEN = '8273421966:AAFRsOqLXr89uogAntyHmiRaj82xcz4icGY'
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
 
-WEBHOOK_URL = 'https://yourapp.onrender.com/'  # your Render URL
+WEBHOOK_URL = 'https://lewtplus-bot.onrender.com'  # your Render URL
 
 # Bot commands
 @bot.message_handler(commands=['start'])
