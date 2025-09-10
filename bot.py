@@ -1,7 +1,7 @@
 import telebot
 
 # Replace with your token
-TOKEN = 'YOUR_BOT_TOKEN'
+TOKEN = '8273421966:AAFRsOqLXr89uogAntyHmiRaj82xcz4icGY'
 bot = telebot.TeleBot(TOKEN)
 
 # When user presses Start
