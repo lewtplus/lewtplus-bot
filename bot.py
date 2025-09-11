@@ -13,7 +13,7 @@ WEBHOOK_URL = 'https://lewtplus-bot.onrender.com'  # your Render URL
 def send_welcome(message):
     bot.send_message(
         message.chat.id,
-        "👋 እንኳን ወደ ሉውት ፕላስ ቦት በደህና መጡ\n"
+        "👋 እንኳን ወደ ለውጥ ፕላስ ቦት በደህና መጡ\n"
         "ይህ ቦት እንቅስቃሴን ለመቀየር እና እርስዎን ለማጠናከር የተዘጋጀ ነው።\n"
         "👋 Welcome to Lewt Plus Bot \n"
         "A Fitness bot intended to help you change"
