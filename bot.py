@@ -2,7 +2,7 @@ import telebot
 from flask import Flask, request
 import os
 
-TOKEN = '8273421966:AAFRsOqLXr89uogAntyHmiRaj82xcz4icGY'
+TOKEN = '8273421966:AAF-E9L4dtMfahza5Mc1rE_6-byZxVM1cno'
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
 
