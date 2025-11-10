@@ -39,6 +39,7 @@ def send_welcome(message):
     bot.send_message(
         message.chat.id,
        "👋 እንኳን ወደ ለውጥ ፕላስ ቦት በደህና መጡ\n" "ይህ ቦት እንቅስቃሴን ለመቀየር እና እርስዎን ለማጠናከር የተዘጋጀ ነው።\n" "👋 Welcome to Lewt Plus Bot \n" "A Fitness bot intended to help you change"
+        f"{total_users}"
     )
 
     image_path = os.path.join(os.path.dirname(__file__), "tena.jpg")
