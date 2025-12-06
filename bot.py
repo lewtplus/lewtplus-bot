@@ -1,27 +1,36 @@
-import telebot
-from flask import Flask, request
 import os
 import json
+from flask import Flask, request
+import telebot
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-# --- TELEGRAM BOT ---
-TOKEN = os.environ.get("TELEGRAM_TOKEN")  # Set this on Render or GitHub Secrets
-bot = telebot.TeleBot(TOKEN)
-app = Flask(__name__)
+# --------------------------
+# 1. READ ENVIRONMENT VARIABLES
+# --------------------------
+TOKEN = os.environ.get("TELEGRAM_TOKEN")
+WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
+FIREBASE_KEY = os.environ.get("FIREBASE_KEY")
+ADMIN_ID = int(os.environ.get("ADMIN_ID", 0))  # your Telegram user ID
 
-WEBHOOK_URL = os.environ.get("WEBHOOK_URL")  # e.g., https://your-bot.onrender.com
-
-# --- FIREBASE SETUP FROM ENV ---
-firebase_key_json = os.environ.get("FIREBASE_KEY")  # Entire JSON as a string
-cred_dict = json.loads(firebase_key_json)
-
+# --------------------------
+# 2. INITIALIZE FIREBASE
+# --------------------------
+cred_dict = json.loads(FIREBASE_KEY)
 cred = credentials.Certificate(cred_dict)
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 users_ref = db.collection("users")
 
-# --- FIRESTORE FUNCTIONS ---
+# --------------------------
+# 3. INITIALIZE TELEGRAM BOT
+# --------------------------
+bot = telebot.TeleBot(TOKEN)
+app = Flask(__name__)
+
+# --------------------------
+# 4. FIRESTORE FUNCTIONS
+# --------------------------
 def user_exists(user_id):
     return users_ref.document(str(user_id)).get().exists
 
@@ -31,7 +40,9 @@ def add_user(user_id):
 def get_total_users():
     return len(list(users_ref.stream()))
 
-# --- TELEGRAM COMMANDS ---
+# --------------------------
+# 5. TELEGRAM COMMANDS
+# --------------------------
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_id = message.from_user.id
@@ -53,8 +64,6 @@ def send_welcome(message):
         with open(img_path, "rb") as img:
             bot.send_photo(message.chat.id, img)
 
-# Admin stats
-ADMIN_ID = int(os.environ.get("ADMIN_ID", 0))
 @bot.message_handler(commands=['stats'])
 def stats(message):
     if message.from_user.id == ADMIN_ID:
@@ -62,14 +71,18 @@ def stats(message):
     else:
         bot.send_message(message.chat.id, "🚫 You are not authorized.")
 
-# --- WEBHOOK ROUTE ---
+# --------------------------
+# 6. WEBHOOK ROUTE
+# --------------------------
 @app.route('/', methods=['POST'])
 def webhook():
     update = telebot.types.Update.de_json(request.data.decode("utf-8"))
     bot.process_new_updates([update])
     return "", 200
 
-# --- SET WEBHOOK ---
+# --------------------------
+# 7. SET WEBHOOK AND RUN
+# --------------------------
 bot.remove_webhook()
 bot.set_webhook(WEBHOOK_URL)
 
