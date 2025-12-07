@@ -11,7 +11,7 @@ from firebase_admin import credentials, firestore
 TOKEN = os.environ.get("TELEGRAM_TOKEN")
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 FIREBASE_KEY = os.environ.get("FIREBASE_KEY")
-ADMIN_ID = int(os.environ.get("ADMIN_ID", 0))  # your Telegram user ID
+ADMIN_ID = int(os.environ.get("ADMIN_ID", 0))  # Your Telegram user ID
 
 # --------------------------
 # 2. INITIALIZE FIREBASE
@@ -46,43 +46,47 @@ def get_total_users():
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_id = message.from_user.id
+
+    # Add user if new
     if not user_exists(user_id):
         add_user(user_id)
 
     total_users = get_total_users()
 
-welcome_text = (
-    "👋 **Welcome to Lewt Plus Bot!**\n"
-    "Your fitness companion for a strong and healthy lifestyle.\n\n"
-    "💪 ለውጥን ጀምር! ቦቱ እንቅስቃሴን ለማሻሻል እና አካልህን ለመጠናከር ተዘጋጅቷል።\n\n"
-    f"👥 **Total Users:** {total_users}\n"
-    "🚀 Let’s start your fitness journey!"
-)
+    # Beautiful welcome text
+    welcome_text = (
+        "👋 **Welcome to Lewt Plus Bot!**\n"
+        "Your fitness companion for a strong and healthy lifestyle.\n\n"
+        "💪 ለውጥን ጀምር! ቦቱ እንቅስቃሴን ለማሻሻል እና አካልህን ለመጠናከር ተዘጋጅቷል።\n\n"
+        f"👥 **Total Users:** {total_users}\n"
+        "🚀 Let’s start your fitness journey!"
+    )
 
-img_path = os.path.join(os.path.dirname(__file__), "tena.jpg")
-if os.path.exists(img_path):
-    with open(img_path, "rb") as img:
-        bot.send_photo(
-            message.chat.id,
-            img,
-            caption=welcome_text,
-            parse_mode="Markdown"
-        )
-else:
-    bot.send_message(message.chat.id, welcome_text, parse_mode="Markdown")
-
-
+    # Send image + text together
     img_path = os.path.join(os.path.dirname(__file__), "tena.jpg")
     if os.path.exists(img_path):
         with open(img_path, "rb") as img:
-            bot.send_photo(message.chat.id, img)
+            bot.send_photo(
+                message.chat.id,
+                img,
+                caption=welcome_text,
+                parse_mode="Markdown"
+            )
+    else:
+        bot.send_message(message.chat.id, welcome_text, parse_mode="Markdown")
 
+
+# Admin-only stats
 @bot.message_handler(commands=['stats'])
 def stats(message):
     if message.from_user.id == ADMIN_ID:
-        bot.send_message(message.chat.id, f"👥 Total users: {get_total_users()}")
+        bot.send_message(
+            message.chat.id,
+            f"👥 Total registered users: {get_total_users()}"
+        )
     else:
         bot.send_message(message.chat.id, "🚫 You are not authorized.")
+
 
 # --------------------------
 # 6. WEBHOOK ROUTE
