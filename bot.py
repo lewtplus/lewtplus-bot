@@ -51,13 +51,26 @@ def send_welcome(message):
 
     total_users = get_total_users()
 
-    bot.send_message(
-        message.chat.id,
-        "👋 እንኳን ወደ ለውጥ ፕላስ ቦት በደህና መጡ!\n"
-        "ይህ ቦት የጤና እና የእንቅስቃሴ ሕይወት ለማሻሻል የተሰራ ነው።\n\n"
-        "👋 Welcome to Lewt Plus Bot!\n"
-        f"👥 Total users: {total_users}"
-    )
+welcome_text = (
+    "👋 **Welcome to Lewt Plus Bot!**\n"
+    "Your fitness companion for a strong and healthy lifestyle.\n\n"
+    "💪 ለውጥን ጀምር! ቦቱ እንቅስቃሴን ለማሻሻል እና አካልህን ለመጠናከር ተዘጋጅቷል።\n\n"
+    f"👥 **Total Users:** {total_users}\n"
+    "🚀 Let’s start your fitness journey!"
+)
+
+img_path = os.path.join(os.path.dirname(__file__), "tena.jpg")
+if os.path.exists(img_path):
+    with open(img_path, "rb") as img:
+        bot.send_photo(
+            message.chat.id,
+            img,
+            caption=welcome_text,
+            parse_mode="Markdown"
+        )
+else:
+    bot.send_message(message.chat.id, welcome_text, parse_mode="Markdown")
+
 
     img_path = os.path.join(os.path.dirname(__file__), "tena.jpg")
     if os.path.exists(img_path):
