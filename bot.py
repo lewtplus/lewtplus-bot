@@ -54,14 +54,24 @@ def send_welcome(message):
     total_users = get_total_users()
 
     # Beautiful welcome text
-    welcome_text = (
-        "👋 **Welcome to Lewt Plus Bot!**\n"
-        "Your fitness companion for a strong and healthy lifestyle.\n\n"
-        "💪  እንኳን ወደ ለውጥ ፕላስ ቦት በደህና መጡ\n" 
-        "ይህ ቦት እንቅስቃሴን ለመቀየር እና እርስዎን ለማጠናከር የተዘጋጀ ነው።\n\n"
-        f"👥 **Total Users:** {total_users}\n"
-        "🚀 Let’s start your fitness journey!"
-    )
+ welcome_text = (
+    "👋 **Welcome to Lewt Plus Premium Bot!**\n"
+    "Your fitness companion for a strong and healthy lifestyle.\n\n"
+
+    "💪 እንኳን ወደ ለውጥ ፕላስ ፕሪሚየም ቦት በደህና መጡ\n"
+    "ይህ ቦት ሙሉ አገልግሎት ለማግኘት የተዘጋጀ ነው።\n\n"
+
+    f"👥 **Total Users:** {total_users}\n\n"
+
+    "🔓 **Premium Access Required**\n"
+    "To get full access, contact us:\n\n"
+
+    "📞 Phone: +251991226530\n"
+    "💬 WhatsApp: https://wa.me/251991226530\n"
+    "📩 Telegram: https://t.me/Bruk_Bedlu\n\n"
+
+    "🚀 **Join the Change!**"
+)
 
     # Send image + text together
     img_path = os.path.join(os.path.dirname(__file__), "tena.jpg")
