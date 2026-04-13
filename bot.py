@@ -1,43 +1,32 @@
 import os
 import json
-import time
 from flask import Flask, request
 import telebot
 import firebase_admin
 from firebase_admin import credentials, firestore
 
 # --------------------------
-# 1. ENV VARIABLES
+# 1. READ ENVIRONMENT VARIABLES
 # --------------------------
 TOKEN = os.environ.get("TELEGRAM_TOKEN")
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 FIREBASE_KEY = os.environ.get("FIREBASE_KEY")
-ADMIN_ID = int(os.environ.get("ADMIN_ID") or 0)
-
-if not TOKEN:
-    raise Exception("Missing TELEGRAM_TOKEN")
-
-if not FIREBASE_KEY:
-    raise Exception("FIREBASE_KEY is missing!")
-
-if not WEBHOOK_URL:
-    raise Exception("WEBHOOK_URL is missing!")
+ADMIN_ID = int(os.environ.get("ADMIN_ID", 0))  # your Telegram user ID
 
 # --------------------------
-# 2. FIREBASE INIT
+# 2. INITIALIZE FIREBASE
 # --------------------------
 cred_dict = json.loads(FIREBASE_KEY)
 cred = credentials.Certificate(cred_dict)
 firebase_admin.initialize_app(cred)
-
 db = firestore.client()
 users_ref = db.collection("users")
 
 # --------------------------
-# 3. BOT + FLASK
+# 3. INITIALIZE TELEGRAM BOT
 # --------------------------
 bot = telebot.TeleBot(TOKEN)
-app = Flask(__name__)
+app = Flask(name)
 
 # --------------------------
 # 4. FIRESTORE FUNCTIONS
@@ -52,75 +41,50 @@ def get_total_users():
     return len(list(users_ref.stream()))
 
 # --------------------------
-# 5. START COMMAND
+# 5. TELEGRAM COMMANDS
 # --------------------------
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     user_id = message.from_user.id
-
     if not user_exists(user_id):
         add_user(user_id)
 
     total_users = get_total_users()
 
-    welcome_text = (
-        "👋 *Welcome to Lewt Plus Premium Bot!*\n"
-        "Your fitness companion for a strong and healthy lifestyle.\n\n"
-
-        "💪 እንኳን ወደ ለውጥ ፕላስ ፕሪሚየም ቦት በደህና መጡ\n\n"
-
-        f"👥 *Total Users:* {total_users}\n\n"
-
-        "🔓 *Premium Access Required*\n"
-        "📞 +251991226530\n"
-        "💬 https://wa.me/251991226530\n"
-        "📩 https://t.me/Bruk_Bedlu\n"
+    bot.send_message(
+        message.chat.id,
+        "👋 እንኳን ወደ ለውጥ ፕላስ ቦት በደህና መጡ!\n"
+        "ይህ ቦት የጤና እና የእንቅስቃሴ ሕይወት ለማሻሻል የተሰራ ነው።\n\n"
+        "👋 Welcome to Lewt Plus Bot!\n"
+        f"👥 Total users: {total_users}"
     )
 
-    img_path = os.path.join(os.path.dirname(__file__), "tena.jpg")
-
+    img_path = os.path.join(os.path.dirname(file), "tena.jpg")
     if os.path.exists(img_path):
         with open(img_path, "rb") as img:
-            bot.send_photo(message.chat.id, img, caption=welcome_text, parse_mode="Markdown")
-    else:
-        bot.send_message(message.chat.id, welcome_text, parse_mode="Markdown")
+            bot.send_photo(message.chat.id, img)
 
-# --------------------------
-# 6. STATS COMMAND
-# --------------------------
 @bot.message_handler(commands=['stats'])
 def stats(message):
     if message.from_user.id == ADMIN_ID:
         bot.send_message(message.chat.id, f"👥 Total users: {get_total_users()}")
     else:
-        bot.send_message(message.chat.id, "🚫 Not authorized.")
+        bot.send_message(message.chat.id, "🚫 You are not authorized.")
 
 # --------------------------
-# 7. WEBHOOK ROUTE (FIXED)
+# 6. WEBHOOK ROUTE
 # --------------------------
-@app.route("/", methods=['POST'])
+@app.route('/', methods=['POST'])
 def webhook():
-    if request.headers.get('content-type') == 'application/json':
-        update = telebot.types.Update.de_json(request.data.decode("utf-8"))
-        bot.process_new_updates([update])
-    return "OK", 200
+    update = telebot.types.Update.de_json(request.data.decode("utf-8"))
+    bot.process_new_updates([update])
+    return "", 200
 
 # --------------------------
-# 8. HEALTH CHECK
+# 7. SET WEBHOOK AND RUN
 # --------------------------
-@app.route("/", methods=["GET"])
-def home():
-    return "Bot is running 🚀"
+bot.remove_webhook()
+bot.set_webhook(WEBHOOK_URL)
 
-# --------------------------
-# 9. START SERVER
-# --------------------------
-if __name__ == "__main__":
-    bot.remove_webhook()
-    time.sleep(1)
-
-    # IMPORTANT: NO TOKEN IN URL
-    bot.set_webhook(url=WEBHOOK_URL)
-
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+if name == "main":
+    app.run(host="0.0.0.0", port=5000)
