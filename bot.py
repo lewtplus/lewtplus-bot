@@ -14,11 +14,14 @@ WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 FIREBASE_KEY = os.environ.get("FIREBASE_KEY")
 ADMIN_ID = int(os.environ.get("ADMIN_ID") or 0)
 
-if not TOKEN or not WEBHOOK_URL:
-    raise Exception("Missing TELEGRAM_TOKEN or WEBHOOK_URL")
+if not TOKEN:
+    raise Exception("Missing TELEGRAM_TOKEN")
 
 if not FIREBASE_KEY:
     raise Exception("FIREBASE_KEY is missing!")
+
+if not WEBHOOK_URL:
+    raise Exception("WEBHOOK_URL is missing!")
 
 # --------------------------
 # 2. FIREBASE INIT
@@ -31,7 +34,7 @@ db = firestore.client()
 users_ref = db.collection("users")
 
 # --------------------------
-# 3. BOT + FLASK APP
+# 3. BOT + FLASK
 # --------------------------
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
@@ -49,7 +52,7 @@ def get_total_users():
     return len(list(users_ref.stream()))
 
 # --------------------------
-# 5. TELEGRAM COMMANDS
+# 5. START COMMAND
 # --------------------------
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -64,70 +67,60 @@ def send_welcome(message):
         "👋 *Welcome to Lewt Plus Premium Bot!*\n"
         "Your fitness companion for a strong and healthy lifestyle.\n\n"
 
-        "💪 እንኳን ወደ ለውጥ ፕላስ ፕሪሚየም ቦት በደህና መጡ\n"
-        "ይህ ቦት ሙሉ አገልግሎት ለማግኘት የተዘጋጀ ነው።\n\n"
+        "💪 እንኳን ወደ ለውጥ ፕላስ ፕሪሚየም ቦት በደህና መጡ\n\n"
 
         f"👥 *Total Users:* {total_users}\n\n"
 
         "🔓 *Premium Access Required*\n"
-        "Contact us:\n\n"
         "📞 +251991226530\n"
         "💬 https://wa.me/251991226530\n"
-        "📩 https://t.me/Bruk_Bedlu\n\n"
-
-        "🚀 *Join the Change!*"
+        "📩 https://t.me/Bruk_Bedlu\n"
     )
 
     img_path = os.path.join(os.path.dirname(__file__), "tena.jpg")
 
     if os.path.exists(img_path):
         with open(img_path, "rb") as img:
-            bot.send_photo(
-                message.chat.id,
-                img,
-                caption=welcome_text,
-                parse_mode="Markdown"
-            )
+            bot.send_photo(message.chat.id, img, caption=welcome_text, parse_mode="Markdown")
     else:
-        bot.send_message(
-            message.chat.id,
-            welcome_text,
-            parse_mode="Markdown"
-        )
+        bot.send_message(message.chat.id, welcome_text, parse_mode="Markdown")
 
+# --------------------------
+# 6. STATS COMMAND
+# --------------------------
 @bot.message_handler(commands=['stats'])
 def stats(message):
     if message.from_user.id == ADMIN_ID:
-        bot.send_message(
-            message.chat.id,
-            f"👥 Total users: {get_total_users()}"
-        )
+        bot.send_message(message.chat.id, f"👥 Total users: {get_total_users()}")
     else:
         bot.send_message(message.chat.id, "🚫 Not authorized.")
 
 # --------------------------
-# 6. WEBHOOK ROUTE
+# 7. WEBHOOK ROUTE (FIXED)
 # --------------------------
-@app.route(f"/{TOKEN}", methods=['POST'])
+@app.route("/", methods=['POST'])
 def webhook():
-    update = telebot.types.Update.de_json(
-        request.data.decode("utf-8")
-    )
-    bot.process_new_updates([update])
+    if request.headers.get('content-type') == 'application/json':
+        update = telebot.types.Update.de_json(request.data.decode("utf-8"))
+        bot.process_new_updates([update])
     return "OK", 200
 
-# Health check (important)
+# --------------------------
+# 8. HEALTH CHECK
+# --------------------------
 @app.route("/", methods=["GET"])
 def home():
     return "Bot is running 🚀"
 
 # --------------------------
-# 7. START SERVER
+# 9. START SERVER
 # --------------------------
 if __name__ == "__main__":
     bot.remove_webhook()
     time.sleep(1)
-    bot.set_webhook(url=f"{WEBHOOK_URL}/{TOKEN}")
+
+    # IMPORTANT: NO TOKEN IN URL
+    bot.set_webhook(url=WEBHOOK_URL)
 
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
