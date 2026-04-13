@@ -6,24 +6,31 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 
 # --------------------------
-# 1. READ ENVIRONMENT VARIABLES
+# 1. ENV VARIABLES
 # --------------------------
 TOKEN = os.environ.get("TELEGRAM_TOKEN")
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 FIREBASE_KEY = os.environ.get("FIREBASE_KEY")
-ADMIN_ID = int(os.environ.get("ADMIN_ID", 0))  # Your Telegram user ID
+ADMIN_ID = int(os.environ.get("ADMIN_ID", 0))
+
+if not TOKEN or not WEBHOOK_URL:
+    raise Exception("Missing TELEGRAM_TOKEN or WEBHOOK_URL")
+
+if not FIREBASE_KEY:
+    raise Exception("FIREBASE_KEY is missing!")
 
 # --------------------------
-# 2. INITIALIZE FIREBASE
+# 2. FIREBASE INIT
 # --------------------------
 cred_dict = json.loads(FIREBASE_KEY)
 cred = credentials.Certificate(cred_dict)
 firebase_admin.initialize_app(cred)
+
 db = firestore.client()
 users_ref = db.collection("users")
 
 # --------------------------
-# 3. INITIALIZE TELEGRAM BOT
+# 3. BOT + APP
 # --------------------------
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
@@ -53,28 +60,28 @@ def send_welcome(message):
 
     total_users = get_total_users()
 
-    # Beautiful welcome text
     welcome_text = (
-    "👋 **Welcome to Lewt Plus Premium Bot!**\n"
-    "Your fitness companion for a strong and healthy lifestyle.\n\n"
+        "👋 *Welcome to Lewt Plus Premium Bot!*\n"
+        "Your fitness companion for a strong and healthy lifestyle.\n\n"
 
-    "💪 እንኳን ወደ ለውጥ ፕላስ ፕሪሚየም ቦት በደህና መጡ\n"
-    "ይህ ቦት ሙሉ አገልግሎት ለማግኘት የተዘጋጀ ነው።\n\n"
+        "💪 እንኳን ወደ ለውጥ ፕላስ ፕሪሚየም ቦት በደህና መጡ\n"
+        "ይህ ቦት ሙሉ አገልግሎት ለማግኘት የተዘጋጀ ነው።\n\n"
 
-    f"👥 **Total Users:** {total_users}\n\n"
+        f"👥 *Total Users:* {total_users}\n\n"
 
-    "🔓 **Premium Access Required**\n"
-    "To get full access, contact us:\n\n"
+        "🔓 *Premium Access Required*\n"
+        "To get full access, contact us:\n\n"
 
-    "📞 Phone: +251991226530\n"
-    "💬 WhatsApp: https://wa.me/251991226530\n"
-    "📩 Telegram: https://t.me/Bruk_Bedlu\n\n"
+        "📞 Phone: +251991226530\n"
+        "💬 WhatsApp: https://wa.me/251991226530\n"
+        "📩 Telegram: https://t.me/Bruk_Bedlu\n\n"
 
-    "🚀 **Join the Change!**"
-)
+        "🚀 *Join the Change!*"
+    )
 
-    # Send image + text together
+    # Send image + text
     img_path = os.path.join(os.path.dirname(__file__), "tena.jpg")
+
     if os.path.exists(img_path):
         with open(img_path, "rb") as img:
             bot.send_photo(
@@ -84,10 +91,15 @@ def send_welcome(message):
                 parse_mode="Markdown"
             )
     else:
-        bot.send_message(message.chat.id, welcome_text, parse_mode="Markdown")
+        bot.send_message(
+            message.chat.id,
+            welcome_text,
+            parse_mode="Markdown"
+        )
 
-
-# Admin-only stats
+# --------------------------
+# ADMIN COMMAND
+# --------------------------
 @bot.message_handler(commands=['stats'])
 def stats(message):
     if message.from_user.id == ADMIN_ID:
@@ -96,23 +108,33 @@ def stats(message):
             f"👥 Total registered users: {get_total_users()}"
         )
     else:
-        bot.send_message(message.chat.id, "🚫 You are not authorized.")
-
+        bot.send_message(
+            message.chat.id,
+            "🚫 You are not authorized."
+        )
 
 # --------------------------
 # 6. WEBHOOK ROUTE
 # --------------------------
-@app.route('/', methods=['POST'])
+@app.route(f"/{TOKEN}", methods=['POST'])
 def webhook():
-    update = telebot.types.Update.de_json(request.data.decode("utf-8"))
+    update = telebot.types.Update.de_json(
+        request.data.decode("utf-8")
+    )
     bot.process_new_updates([update])
-    return "", 200
+    return "OK", 200
+
+# Health check (IMPORTANT)
+@app.route("/", methods=["GET"])
+def home():
+    return "Bot is running 🚀"
 
 # --------------------------
-# 7. SET WEBHOOK AND RUN
+# 7. START APP
 # --------------------------
-bot.remove_webhook()
-bot.set_webhook(WEBHOOK_URL)
-
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    bot.remove_webhook()
+    bot.set_webhook(url=f"{WEBHOOK_URL}/{TOKEN}")
+
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
