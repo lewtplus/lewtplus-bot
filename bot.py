@@ -54,14 +54,16 @@ def get_total_users():
 # 5. COMMANDS
 # --------------------------
 @bot.message_handler(commands=['start'])
-def send_welcome(message):
+def start(message):
     user_id = message.from_user.id
+
     if not user_exists(user_id):
         add_user(user_id)
 
     total_users = get_total_users()
 
     bot.send_message(
+        message.chat.id,
         "👋 *Welcome to Lewt Plus Premium Bot!*\n"
         "Your fitness companion for a strong and healthy lifestyle.\n\n"
 
