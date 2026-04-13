@@ -62,7 +62,7 @@ def send_welcome(message):
 
     total_users = get_total_users()
 
-    welcome_text = (
+     bot.send_message(
         "👋 *Welcome to Lewt Plus Premium Bot!*\n"
         "Your fitness companion for a strong and healthy lifestyle.\n\n"
 
