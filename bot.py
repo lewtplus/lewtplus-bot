@@ -54,7 +54,7 @@ def get_total_users():
 # 5. COMMANDS
 # --------------------------
 @bot.message_handler(commands=['start'])
-def start(message):
+def send_welcome(message):
     user_id = message.from_user.id
 
     if not user_exists(user_id):
@@ -62,11 +62,18 @@ def start(message):
 
     total_users = get_total_users()
 
-    bot.send_message(
-        message.chat.id,
-        "👋 Welcome to Lewt Plus Bot!\n\n"
-        "💪 Health & fitness improvement bot\n\n"
-        f"👥 Total users: {total_users}"
+    welcome_text = (
+        "👋 *Welcome to Lewt Plus Premium Bot!*\n"
+        "Your fitness companion for a strong and healthy lifestyle.\n\n"
+
+        "💪 እንኳን ወደ ለውጥ ፕላስ ፕሪሚየም ቦት በደህና መጡ\n\n"
+
+        f"👥 *Total Users:* {total_users}\n\n"
+
+        "🔓 *Premium Access Required*\n"
+        "📞 +251991226530\n"
+        "💬 https://wa.me/251991226530\n"
+        "📩 https://t.me/Bruk_Bedlu\n"
     )
 
     img_path = os.path.join(os.path.dirname(__file__), "tena.jpg")
