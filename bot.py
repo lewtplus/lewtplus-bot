@@ -1,5 +1,6 @@
 import os
 import json
+import time
 from flask import Flask, request
 import telebot
 import firebase_admin
@@ -11,7 +12,7 @@ from firebase_admin import credentials, firestore
 TOKEN = os.environ.get("TELEGRAM_TOKEN")
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 FIREBASE_KEY = os.environ.get("FIREBASE_KEY")
-ADMIN_ID = int(os.environ.get("ADMIN_ID", 0))
+ADMIN_ID = int(os.environ.get("ADMIN_ID") or 0)
 
 if not TOKEN or not WEBHOOK_URL:
     raise Exception("Missing TELEGRAM_TOKEN or WEBHOOK_URL")
@@ -30,7 +31,7 @@ db = firestore.client()
 users_ref = db.collection("users")
 
 # --------------------------
-# 3. BOT + APP
+# 3. BOT + FLASK APP
 # --------------------------
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
@@ -54,7 +55,6 @@ def get_total_users():
 def send_welcome(message):
     user_id = message.from_user.id
 
-    # Add user if new
     if not user_exists(user_id):
         add_user(user_id)
 
@@ -70,16 +70,14 @@ def send_welcome(message):
         f"👥 *Total Users:* {total_users}\n\n"
 
         "🔓 *Premium Access Required*\n"
-        "To get full access, contact us:\n\n"
-
-        "📞 Phone: +251991226530\n"
-        "💬 WhatsApp: https://wa.me/251991226530\n"
-        "📩 Telegram: https://t.me/Bruk_Bedlu\n\n"
+        "Contact us:\n\n"
+        "📞 +251991226530\n"
+        "💬 https://wa.me/251991226530\n"
+        "📩 https://t.me/Bruk_Bedlu\n\n"
 
         "🚀 *Join the Change!*"
     )
 
-    # Send image + text
     img_path = os.path.join(os.path.dirname(__file__), "tena.jpg")
 
     if os.path.exists(img_path):
@@ -97,21 +95,15 @@ def send_welcome(message):
             parse_mode="Markdown"
         )
 
-# --------------------------
-# ADMIN COMMAND
-# --------------------------
 @bot.message_handler(commands=['stats'])
 def stats(message):
     if message.from_user.id == ADMIN_ID:
         bot.send_message(
             message.chat.id,
-            f"👥 Total registered users: {get_total_users()}"
+            f"👥 Total users: {get_total_users()}"
         )
     else:
-        bot.send_message(
-            message.chat.id,
-            "🚫 You are not authorized."
-        )
+        bot.send_message(message.chat.id, "🚫 Not authorized.")
 
 # --------------------------
 # 6. WEBHOOK ROUTE
@@ -124,16 +116,17 @@ def webhook():
     bot.process_new_updates([update])
     return "OK", 200
 
-# Health check (IMPORTANT)
+# Health check (important)
 @app.route("/", methods=["GET"])
 def home():
     return "Bot is running 🚀"
 
 # --------------------------
-# 7. START APP
+# 7. START SERVER
 # --------------------------
 if __name__ == "__main__":
     bot.remove_webhook()
+    time.sleep(1)
     bot.set_webhook(url=f"{WEBHOOK_URL}/{TOKEN}")
 
     port = int(os.environ.get("PORT", 10000))
