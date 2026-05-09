@@ -4,7 +4,7 @@ from flask import Flask, request
 import telebot
 import firebase_admin
 from firebase_admin import credentials, firestore
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+
 # --------------------------
 # 1. ENV VARIABLES
 # --------------------------
@@ -43,9 +43,7 @@ def user_exists(user_id):
     return users_ref.document(str(user_id)).get().exists
 
 def add_user(user_id):
-    users_ref.document(str(user_id)).set({
-        "id": user_id
-    })
+    users_ref.document(str(user_id)).set({"id": user_id})
 
 def get_total_users():
     return len(list(users_ref.stream()))
@@ -56,66 +54,44 @@ def get_total_users():
 @bot.message_handler(commands=['start'])
 def start(message):
     user_id = message.from_user.id
-
     if not user_exists(user_id):
         add_user(user_id)
-
+    
     total_users = get_total_users()
 
-    # Create button
-    markup = InlineKeyboardMarkup()
-
-    button = InlineKeyboardButton(
-        "🔥 Premium Benefits",
-        callback_data="premium_info"
-    )
-
-    markup.add(button)
-
-    bot.send_message(
-        message.chat.id,
+    welcome_text = (
         "👋 *Welcome to Lewt Plus Premium Bot!*\n"
         "Your fitness companion for a strong and healthy lifestyle.\n\n"
-
         "💪 እንኳን ወደ ለውጥ ፕላስ ፕሪሚየም ቦት በደህና መጡ\n\n"
-
         f"👥 *Total Users:* {total_users}\n\n"
-
         "🔓 *Premium Access Required*\n"
         "📞 +251991226530\n"
         "💬 https://wa.me/251991226530\n"
-        "📩 https://t.me/Bruk_Bedlu\n",
+        "📩 https://t.me/Bruk_Bedlu"
+    )
 
+    # Inline Keyboard Button
+    markup = telebot.types.InlineKeyboardMarkup()
+    button = telebot.types.InlineKeyboardButton(
+        text="ℹ️ About Lewt Plus", 
+        callback_data="about_lewt"
+    )
+    markup.add(button)
+
+    # Send welcome message with button
+    bot.send_message(
+        message.chat.id,
+        welcome_text,
         parse_mode="Markdown",
         reply_markup=markup
     )
 
+    # Send photo
     img_path = os.path.join(os.path.dirname(__file__), "tena.jpg")
-
     if os.path.exists(img_path):
         with open(img_path, "rb") as img:
             bot.send_photo(message.chat.id, img)
 
-@bot.callback_query_handler(func=lambda call: True)
-def callback_query(call):
-
-    if call.data == "premium_info":
-
-        bot.send_message(
-            call.message.chat.id,
-
-            "🔥 *Lewt Plus Premium Benefits*\n\n"
-            "✅ Full workout plans\n"
-            "✅ Home & Gym workouts\n"
-            "✅ Fat loss programs\n"
-            "✅ Muscle building plans\n"
-            "✅ Nutrition guidance\n"
-            "✅ Beginner to advanced levels",
-
-            parse_mode="Markdown"
-        )
-
-    bot.answer_callback_query(call.id)
 
 @bot.message_handler(commands=['stats'])
 def stats(message):
@@ -124,12 +100,40 @@ def stats(message):
     else:
         bot.send_message(message.chat.id, "🚫 Not authorized.")
 
+
 # --------------------------
-# 6. WEBHOOK ROUTES
+# 6. CALLBACK HANDLER (Button Click)
+# --------------------------
+@bot.callback_query_handler(func=lambda call: True)
+def handle_callback(call):
+    if call.data == "about_lewt":
+        about_text = (
+            "🏋️‍♂️ *Lewt Plus Premium*\n\n"
+            "Your ultimate fitness companion in Ethiopia 🇪🇹\n\n"
+            "✅ Personalized workout plans\n"
+            "✅ Nutrition guidance\n"
+            "✅ Progress tracking\n"
+            "✅ Expert support\n\n"
+            "🔥 Ready to transform your body and life?\n"
+            "Contact us to unlock Premium Access!"
+        )
+        
+        bot.answer_callback_query(call.id, text="Opening information...")  # Nice feedback
+        
+        bot.send_message(
+            call.message.chat.id,
+            about_text,
+            parse_mode="Markdown"
+        )
+
+
+# --------------------------
+# 7. WEBHOOK ROUTES
 # --------------------------
 @app.route('/', methods=['GET'])
 def home():
-    return "Bot is running", 200
+    return "Bot is running ✅", 200
+
 
 @app.route('/', methods=['POST'])
 def webhook():
@@ -138,16 +142,16 @@ def webhook():
     bot.process_new_updates([update])
     return "", 200
 
+
 # --------------------------
-# 7. START WEBHOOK
+# 8. START WEBHOOK
 # --------------------------
 bot.remove_webhook()
-
 if WEBHOOK_URL:
     bot.set_webhook(url=WEBHOOK_URL)
 
 # --------------------------
-# 8. RUN APP
+# 9. RUN APP
 # --------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
