@@ -34,7 +34,7 @@ users_ref = db.collection("users")
 # 3. FLASK + BOT INIT
 # --------------------------
 bot = telebot.TeleBot(TOKEN)
-app = Flask(name)
+app = Flask(__name__)
 
 # --------------------------
 # 4. FIRESTORE FUNCTIONS
@@ -90,7 +90,7 @@ def start(message):
         reply_markup=markup
     )
 
-    img_path = os.path.join(os.path.dirname(file), "tena.jpg")
+    img_path = os.path.join(os.path.dirname(__file__), "tena.jpg")
 
     if os.path.exists(img_path):
         with open(img_path, "rb") as img:
@@ -149,6 +149,6 @@ if WEBHOOK_URL:
 # --------------------------
 # 8. RUN APP
 # --------------------------
-if name == "main":
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
