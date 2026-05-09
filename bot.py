@@ -4,7 +4,7 @@ from flask import Flask, request
 import telebot
 import firebase_admin
 from firebase_admin import credentials, firestore
-
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 # --------------------------
 # 1. ENV VARIABLES
 # --------------------------
@@ -34,7 +34,7 @@ users_ref = db.collection("users")
 # 3. FLASK + BOT INIT
 # --------------------------
 bot = telebot.TeleBot(TOKEN)
-app = Flask(__name__)
+app = Flask(name)
 
 # --------------------------
 # 4. FIRESTORE FUNCTIONS
@@ -62,6 +62,16 @@ def start(message):
 
     total_users = get_total_users()
 
+    # Create button
+    markup = InlineKeyboardMarkup()
+
+    button = InlineKeyboardButton(
+        "🔥 Premium Benefits",
+        callback_data="premium_info"
+    )
+
+    markup.add(button)
+
     bot.send_message(
         message.chat.id,
         "👋 *Welcome to Lewt Plus Premium Bot!*\n"
@@ -74,14 +84,38 @@ def start(message):
         "🔓 *Premium Access Required*\n"
         "📞 +251991226530\n"
         "💬 https://wa.me/251991226530\n"
-        "📩 https://t.me/Bruk_Bedlu\n"
+        "📩 https://t.me/Bruk_Bedlu\n",
+
+        parse_mode="Markdown",
+        reply_markup=markup
     )
 
-    img_path = os.path.join(os.path.dirname(__file__), "tena.jpg")
+    img_path = os.path.join(os.path.dirname(file), "tena.jpg")
 
     if os.path.exists(img_path):
         with open(img_path, "rb") as img:
             bot.send_photo(message.chat.id, img)
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+
+    if call.data == "premium_info":
+
+        bot.send_message(
+            call.message.chat.id,
+
+            "🔥 *Lewt Plus Premium Benefits*\n\n"
+            "✅ Full workout plans\n"
+            "✅ Home & Gym workouts\n"
+            "✅ Fat loss programs\n"
+            "✅ Muscle building plans\n"
+            "✅ Nutrition guidance\n"
+            "✅ Beginner to advanced levels",
+
+            parse_mode="Markdown"
+        )
+
+    bot.answer_callback_query(call.id)
 
 @bot.message_handler(commands=['stats'])
 def stats(message):
@@ -115,6 +149,6 @@ if WEBHOOK_URL:
 # --------------------------
 # 8. RUN APP
 # --------------------------
-if __name__ == "__main__":
+if name == "main":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
