@@ -2,6 +2,7 @@ import os
 import json
 from flask import Flask, request
 import telebot
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 import firebase_admin
 from firebase_admin import credentials, firestore
 
@@ -9,12 +10,13 @@ from firebase_admin import credentials, firestore
 # 1. ENV VARIABLES
 # --------------------------
 TOKEN = os.environ.get("TELEGRAM_TOKEN")
-WEBHOOK_URL = os.environ.get("WEBHOOK_URL")  # must be https://your-domain.com/
+WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 FIREBASE_KEY = os.environ.get("FIREBASE_KEY")
 ADMIN_ID = int(os.environ.get("ADMIN_ID") or 0)
 
 if not TOKEN:
     raise Exception("TELEGRAM_TOKEN is missing")
+
 if not FIREBASE_KEY:
     raise Exception("FIREBASE_KEY is missing")
 
@@ -42,16 +44,18 @@ app = Flask(__name__)
 def user_exists(user_id):
     return users_ref.document(str(user_id)).get().exists
 
+
 def add_user(user_id):
     users_ref.document(str(user_id)).set({
         "id": user_id
     })
 
+
 def get_total_users():
     return len(list(users_ref.stream()))
 
 # --------------------------
-# 5. COMMANDS
+# 5. START COMMAND
 # --------------------------
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -62,9 +66,20 @@ def start(message):
 
     total_users = get_total_users()
 
+    # Create inline button
+    markup = InlineKeyboardMarkup()
+
+    premium_button = InlineKeyboardButton(
+        "🔥 View Premium Benefits",
+        callback_data="premium_info"
+    )
+
+    markup.add(premium_button)
+
+    # Welcome message with button
     bot.send_message(
         message.chat.id,
-        "👋 *Welcome to Lewt Plus Premium Bot!*\n"
+        "👋 *Welcome to Lewt Plus Premium Bot!*\n\n"
         "Your fitness companion for a strong and healthy lifestyle.\n\n"
 
         "💪 እንኳን ወደ ለውጥ ፕላስ ፕሪሚየም ቦት በደህና መጡ\n\n"
@@ -74,38 +89,87 @@ def start(message):
         "🔓 *Premium Access Required*\n"
         "📞 +251991226530\n"
         "💬 https://wa.me/251991226530\n"
-        "📩 https://t.me/Bruk_Bedlu\n"
+        "📩 https://t.me/Bruk_Bedlu\n",
+
+        parse_mode="Markdown",
+        reply_markup=markup
     )
 
+    # Send image
     img_path = os.path.join(os.path.dirname(__file__), "tena.jpg")
 
     if os.path.exists(img_path):
         with open(img_path, "rb") as img:
             bot.send_photo(message.chat.id, img)
 
-@bot.message_handler(commands=['stats'])
-def stats(message):
-    if message.from_user.id == ADMIN_ID:
-        bot.send_message(message.chat.id, f"👥 Total users: {get_total_users()}")
-    else:
-        bot.send_message(message.chat.id, "🚫 Not authorized.")
+# --------------------------
+# 6. BUTTON CLICK HANDLER
+# --------------------------
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+
+    if call.data == "premium_info":
+
+        bot.send_message(
+            call.message.chat.id,
+
+            "🔥 *Lewt Plus Premium Benefits*\n\n"
+
+            "✅ Full workout programs\n"
+            "✅ Home workouts\n"
+            "✅ Gym workouts\n"
+            "✅ Fat loss plans\n"
+            "✅ Muscle building plans\n"
+            "✅ Nutrition guidance\n"
+            "✅ Beginner to advanced levels\n"
+            "✅ Daily fitness motivation\n\n"
+
+            "📞 Contact Admin:\n"
+            "+251991226530",
+
+            parse_mode="Markdown"
+        )
+
+    bot.answer_callback_query(call.id)
 
 # --------------------------
-# 6. WEBHOOK ROUTES
+# 7. STATS COMMAND
+# --------------------------
+@bot.message_handler(commands=['stats'])
+def stats(message):
+
+    if message.from_user.id == ADMIN_ID:
+        bot.send_message(
+            message.chat.id,
+            f"👥 Total users: {get_total_users()}"
+        )
+    else:
+        bot.send_message(
+            message.chat.id,
+            "🚫 Not authorized."
+        )
+
+# --------------------------
+# 8. WEBHOOK ROUTES
 # --------------------------
 @app.route('/', methods=['GET'])
 def home():
     return "Bot is running", 200
 
+
 @app.route('/', methods=['POST'])
 def webhook():
+
     json_str = request.get_data().decode("utf-8")
+
     update = telebot.types.Update.de_json(json_str)
+
     bot.process_new_updates([update])
+
     return "", 200
 
 # --------------------------
-# 7. START WEBHOOK
+# 9. START WEBHOOK
 # --------------------------
 bot.remove_webhook()
 
@@ -113,8 +177,13 @@ if WEBHOOK_URL:
     bot.set_webhook(url=WEBHOOK_URL)
 
 # --------------------------
-# 8. RUN APP
+# 10. RUN APP
 # --------------------------
 if __name__ == "__main__":
+
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+
+    app.run(
+        host="0.0.0.0",
+        port=port
+    )
