@@ -10,7 +10,7 @@ from firebase_admin import credentials, firestore
 # 1. ENV VARIABLES
 # --------------------------
 TOKEN = os.environ.get("TELEGRAM_TOKEN")
-WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
+WEBHOOK_URL = os.environ.get("WEBHOOK_URL")  # must be https://your-domain.com/
 FIREBASE_KEY = os.environ.get("FIREBASE_KEY")
 ADMIN_ID = int(os.environ.get("ADMIN_ID") or 0)
 
@@ -55,7 +55,7 @@ def get_total_users():
     return len(list(users_ref.stream()))
 
 # --------------------------
-# 5. START COMMAND
+# 5. COMMANDS
 # --------------------------
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -66,20 +66,19 @@ def start(message):
 
     total_users = get_total_users()
 
-    # Create inline button
+    # Create button
     markup = InlineKeyboardMarkup()
 
-    premium_button = InlineKeyboardButton(
-        "🔥 View Premium Benefits",
+    button = InlineKeyboardButton(
+        "🔥 Premium Benefits",
         callback_data="premium_info"
     )
 
-    markup.add(premium_button)
+    markup.add(button)
 
-    # Welcome message with button
     bot.send_message(
         message.chat.id,
-        "👋 *Welcome to Lewt Plus Premium Bot!*\n\n"
+        "👋 *Welcome to Lewt Plus Premium Bot!*\n"
         "Your fitness companion for a strong and healthy lifestyle.\n\n"
 
         "💪 እንኳን ወደ ለውጥ ፕላስ ፕሪሚየም ቦት በደህና መጡ\n\n"
@@ -95,16 +94,13 @@ def start(message):
         reply_markup=markup
     )
 
-    # Send image
     img_path = os.path.join(os.path.dirname(__file__), "tena.jpg")
 
     if os.path.exists(img_path):
         with open(img_path, "rb") as img:
             bot.send_photo(message.chat.id, img)
 
-# --------------------------
-# 6. BUTTON CLICK HANDLER
-# --------------------------
+
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
 
@@ -114,27 +110,20 @@ def callback_query(call):
             call.message.chat.id,
 
             "🔥 *Lewt Plus Premium Benefits*\n\n"
-
-            "✅ Full workout programs\n"
-            "✅ Home workouts\n"
-            "✅ Gym workouts\n"
-            "✅ Fat loss plans\n"
+            "✅ Full workout plans\n"
+            "✅ Home & Gym workouts\n"
+            "✅ Fat loss programs\n"
             "✅ Muscle building plans\n"
             "✅ Nutrition guidance\n"
-            "✅ Beginner to advanced levels\n"
-            "✅ Daily fitness motivation\n\n"
-
-            "📞 Contact Admin:\n"
-            "+251991226530",
+            "✅ Beginner to advanced levels\n\n"
+            "📞 Contact: +251991226530",
 
             parse_mode="Markdown"
         )
 
     bot.answer_callback_query(call.id)
 
-# --------------------------
-# 7. STATS COMMAND
-# --------------------------
+
 @bot.message_handler(commands=['stats'])
 def stats(message):
 
@@ -150,7 +139,7 @@ def stats(message):
         )
 
 # --------------------------
-# 8. WEBHOOK ROUTES
+# 6. WEBHOOK ROUTES
 # --------------------------
 @app.route('/', methods=['GET'])
 def home():
@@ -169,7 +158,7 @@ def webhook():
     return "", 200
 
 # --------------------------
-# 9. START WEBHOOK
+# 7. START WEBHOOK
 # --------------------------
 bot.remove_webhook()
 
@@ -177,7 +166,7 @@ if WEBHOOK_URL:
     bot.set_webhook(url=WEBHOOK_URL)
 
 # --------------------------
-# 10. RUN APP
+# 8. RUN APP
 # --------------------------
 if __name__ == "__main__":
 
