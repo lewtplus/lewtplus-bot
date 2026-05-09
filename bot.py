@@ -9,7 +9,7 @@ from firebase_admin import credentials, firestore
 # 1. ENV VARIABLES
 # --------------------------
 TOKEN = os.environ.get("TELEGRAM_TOKEN")
-WEBHOOK_URL = os.environ.get("WEBHOOK_URL")  # must be https://your-domain.com/
+WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
 FIREBASE_KEY = os.environ.get("FIREBASE_KEY")
 ADMIN_ID = int(os.environ.get("ADMIN_ID") or 0)
 
@@ -23,7 +23,6 @@ if not FIREBASE_KEY:
 # --------------------------
 cred_dict = json.loads(FIREBASE_KEY)
 cred = credentials.Certificate(cred_dict)
-
 if not firebase_admin._apps:
     firebase_admin.initialize_app(cred)
 
@@ -34,7 +33,7 @@ users_ref = db.collection("users")
 # 3. FLASK + BOT INIT
 # --------------------------
 bot = telebot.TeleBot(TOKEN)
-app = Flask(__name__)
+app = Flask(__name__)   # Fixed: was 'name'
 
 # --------------------------
 # 4. FIRESTORE FUNCTIONS
@@ -43,7 +42,9 @@ def user_exists(user_id):
     return users_ref.document(str(user_id)).get().exists
 
 def add_user(user_id):
-    users_ref.document(str(user_id)).set({"id": user_id})
+    users_ref.document(str(user_id)).set({
+        "id": user_id
+    })
 
 def get_total_users():
     return len(list(users_ref.stream()))
@@ -70,15 +71,10 @@ def start(message):
         "📩 https://t.me/Bruk_Bedlu"
     )
 
-    # Inline Keyboard Button
+    # === ADD BUTTON HERE ===
     markup = telebot.types.InlineKeyboardMarkup()
-    button = telebot.types.InlineKeyboardButton(
-        text="ℹ️ About Lewt Plus", 
-        callback_data="about_lewt"
-    )
-    markup.add(button)
+    markup.add(telebot.types.InlineKeyboardButton("ℹ️ About Lewt Plus", callback_data="about_lewt"))
 
-    # Send welcome message with button
     bot.send_message(
         message.chat.id,
         welcome_text,
@@ -101,9 +97,9 @@ def stats(message):
         bot.send_message(message.chat.id, "🚫 Not authorized.")
 
 
-# --------------------------
-# 6. CALLBACK HANDLER (Button Click)
-# --------------------------
+# ======================
+# NEW: BUTTON CALLBACK HANDLER
+# ======================
 @bot.callback_query_handler(func=lambda call: True)
 def handle_callback(call):
     if call.data == "about_lewt":
@@ -114,26 +110,20 @@ def handle_callback(call):
             "✅ Nutrition guidance\n"
             "✅ Progress tracking\n"
             "✅ Expert support\n\n"
-            "🔥 Ready to transform your body and life?\n"
-            "Contact us to unlock Premium Access!"
+            "🔥 Ready to transform your body?\n"
+            "Contact us for Premium Access!"
         )
         
-        bot.answer_callback_query(call.id, text="Opening information...")  # Nice feedback
-        
-        bot.send_message(
-            call.message.chat.id,
-            about_text,
-            parse_mode="Markdown"
-        )
+        bot.answer_callback_query(call.id, "✓ Opening info...")
+        bot.send_message(call.message.chat.id, about_text, parse_mode="Markdown")
 
 
 # --------------------------
-# 7. WEBHOOK ROUTES
+# 6. WEBHOOK ROUTES
 # --------------------------
 @app.route('/', methods=['GET'])
 def home():
-    return "Bot is running ✅", 200
-
+    return "Bot is running", 200
 
 @app.route('/', methods=['POST'])
 def webhook():
@@ -144,15 +134,15 @@ def webhook():
 
 
 # --------------------------
-# 8. START WEBHOOK
+# 7. START WEBHOOK
 # --------------------------
 bot.remove_webhook()
 if WEBHOOK_URL:
     bot.set_webhook(url=WEBHOOK_URL)
 
 # --------------------------
-# 9. RUN APP
+# 8. RUN APP
 # --------------------------
-if __name__ == "__main__":
+if __name__ == "__main__":   # Fixed
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
