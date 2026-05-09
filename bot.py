@@ -44,12 +44,10 @@ app = Flask(__name__)
 def user_exists(user_id):
     return users_ref.document(str(user_id)).get().exists
 
-
 def add_user(user_id):
     users_ref.document(str(user_id)).set({
         "id": user_id
     })
-
 
 def get_total_users():
     return len(list(users_ref.stream()))
@@ -66,7 +64,7 @@ def start(message):
 
     total_users = get_total_users()
 
-    # Create button
+    # Button
     markup = InlineKeyboardMarkup()
 
     button = InlineKeyboardButton(
@@ -100,7 +98,9 @@ def start(message):
         with open(img_path, "rb") as img:
             bot.send_photo(message.chat.id, img)
 
-
+# --------------------------
+# BUTTON CLICK
+# --------------------------
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
 
@@ -123,20 +123,12 @@ def callback_query(call):
 
     bot.answer_callback_query(call.id)
 
-
 @bot.message_handler(commands=['stats'])
 def stats(message):
-
     if message.from_user.id == ADMIN_ID:
-        bot.send_message(
-            message.chat.id,
-            f"👥 Total users: {get_total_users()}"
-        )
+        bot.send_message(message.chat.id, f"👥 Total users: {get_total_users()}")
     else:
-        bot.send_message(
-            message.chat.id,
-            "🚫 Not authorized."
-        )
+        bot.send_message(message.chat.id, "🚫 Not authorized.")
 
 # --------------------------
 # 6. WEBHOOK ROUTES
@@ -145,16 +137,11 @@ def stats(message):
 def home():
     return "Bot is running", 200
 
-
 @app.route('/', methods=['POST'])
 def webhook():
-
     json_str = request.get_data().decode("utf-8")
-
     update = telebot.types.Update.de_json(json_str)
-
     bot.process_new_updates([update])
-
     return "", 200
 
 # --------------------------
@@ -169,10 +156,5 @@ if WEBHOOK_URL:
 # 8. RUN APP
 # --------------------------
 if __name__ == "__main__":
-
     port = int(os.environ.get("PORT", 5000))
-
-    app.run(
-        host="0.0.0.0",
-        port=port
-    )
+    app.run(host="0.0.0.0", port=port)
