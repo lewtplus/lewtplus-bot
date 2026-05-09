@@ -34,7 +34,7 @@ users_ref = db.collection("users")
 # 3. FLASK + BOT INIT
 # --------------------------
 bot = telebot.TeleBot(TOKEN)
-app = Flask(name)
+app = Flask(__name__)
 
 # --------------------------
 # 4. FIRESTORE FUNCTIONS
@@ -77,7 +77,7 @@ def start(message):
         "📩 https://t.me/Bruk_Bedlu\n"
     )
 
-    img_path = os.path.join(os.path.dirname(file), "tena.jpg")
+    img_path = os.path.join(os.path.dirname(__file__), "tena.jpg")
 
     if os.path.exists(img_path):
         with open(img_path, "rb") as img:
@@ -115,6 +115,9 @@ if WEBHOOK_URL:
 # --------------------------
 # 8. RUN APP
 # --------------------------
-if name == "main":
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
+
+i have this welcome code for my telegram bot i want to add a button bellow the text and when the button is clicked it shows a text 
